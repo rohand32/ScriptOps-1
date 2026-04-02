@@ -24,7 +24,9 @@ The API enables `CORSMiddleware` with origins from **`SCRIPTOPS_CORS_ORIGINS`** 
 export SCRIPTOPS_CORS_ORIGINS="https://scriptops.netcorecloud.com,http://localhost:5500"
 ```
 
-The default in code includes the production UI origin above, common local dev ports, and `null` (for `file://`). Override with **`SCRIPTOPS_CORS_ORIGINS`** if you want a minimal allowlist (UI origins only, never the API hostname unless the UI is served from it).
+The default in code includes the production UI origin above, common local dev ports, and `null` (for `file://`). If you set **`SCRIPTOPS_CORS_ORIGINS`** yourself, the API **still appends `null`** automatically so opening the HTML via `file://` keeps working. To forbid `file://` clients, set **`SCRIPTOPS_CORS_NO_NULL=1`**.
+
+CORS uses **`allow_credentials=False`** (auth is via headers, not cookies), which avoids common browser issues with `Origin: null` and credentialed requests.
 
 ## SSE and the `X-ScriptOps-Key` header
 

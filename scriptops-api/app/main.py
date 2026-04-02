@@ -27,17 +27,21 @@ def _static_root() -> str:
 
 
 def _cors_origins() -> list[str]:
-    # Include "null" so browsers allow requests when the dashboard is opened as file://
-    # (VS Code / Finder "Open with browser" uses Origin: null).
-    # List the **dashboard (UI) origin(s)** only — not the API hostname. Browsers send
-    # the page's origin; the API may live on api.* or another domain.
+    # List the **dashboard (UI) origin(s)** — not the API hostname (unless UI is served from it).
+    # Browsers send Origin: null for pages opened as file:// — that must be allowed if you use file://.
     raw = os.environ.get(
         "SCRIPTOPS_CORS_ORIGINS",
         "https://scriptops.netcorecloud.com,"
         "http://localhost:3000,http://localhost:8080,"
         "http://127.0.0.1:5500,http://localhost:5500,http://127.0.0.1:8080,null",
     )
-    return [o.strip() for o in raw.split(",") if o.strip()]
+    origins = [o.strip() for o in raw.split(",") if o.strip()]
+    # If you override SCRIPTOPS_CORS_ORIGINS in production, file:// breaks unless "null" is included.
+    # Append automatically unless explicitly disabled (public APIs may set SCRIPTOPS_CORS_NO_NULL=1).
+    if os.environ.get("SCRIPTOPS_CORS_NO_NULL", "").lower() not in ("1", "true", "yes"):
+        if "null" not in origins:
+            origins.append("null")
+    return origins
 
 
 @asynccontextmanager
@@ -84,7 +88,9 @@ Keys are scoped to a role; actions are enforced against that role.
 app.add_middleware(
     CORSMiddleware,
     allow_origins=_cors_origins(),
-    allow_credentials=True,
+    # False: auth uses X-ScriptOps-Key / Bearer headers, not cookies — avoids browser issues
+    # with Origin "null" (file://) when combined with Allow-Credentials.
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )

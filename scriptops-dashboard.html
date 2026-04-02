@@ -833,10 +833,14 @@ function getAuthHeaders() {
   return {};
 }
 
-function _fetchErrHint() {
-  return (typeof location !== 'undefined' && location.protocol === 'file:')
-    ? ' You opened this page via file:// — ensure the API allows Origin "null" (default in ScriptOps) or serve this HTML over HTTP (e.g. Live Server).'
-    : '';
+function _fetchErrHint(apiBase) {
+  const lines = [];
+  if (typeof location !== 'undefined' && location.protocol === 'file:') {
+    lines.push('You opened this page as file://. Browsers send Origin "null"; the API must allow it (ScriptOps appends "null" to CORS unless SCRIPTOPS_CORS_NO_NULL=1). Prefer serving this file over HTTPS/HTTP (your UI domain, Live Server, or /static/ on the API) instead of double-clicking the HTML.');
+  }
+  lines.push('Check: curl -sS -o /dev/null -w "%{http_code}" "' + (apiBase || '') + '/health" — should print 200.');
+  lines.push('If the API uses a private TLS cert, the browser will block fetch; use a public CA cert or test with curl -k.');
+  return ' ' + lines.join(' ');
 }
 
 /** POST /auth/login — body is { api_key } or { username, password }. */
@@ -850,7 +854,7 @@ async function authLoginRequest(base, body) {
     });
   } catch (netErr) {
     throw new Error(
-      `Cannot reach ${base}: ${netErr && netErr.message ? netErr.message : netErr}. Start the API: cd scriptops-api && uvicorn app.main:app --host 127.0.0.1 --port 8000.${_fetchErrHint()}`
+      `Cannot reach ${base}: ${netErr && netErr.message ? netErr.message : netErr}. Local dev: cd scriptops-api && uvicorn app.main:app --host 127.0.0.1 --port 8000.${_fetchErrHint(base)}`
     );
   }
   if (!r.ok) {
@@ -888,7 +892,7 @@ async function apiFetch(path, opts = {}) {
     r = await fetch(base + path, { ...opts, headers });
   } catch (netErr) {
     throw new Error(
-      `Cannot reach ${base}: ${netErr && netErr.message ? netErr.message : netErr}. Start the API: cd scriptops-api && uvicorn app.main:app --host 127.0.0.1 --port 8000.${_fetchErrHint()}`
+      `Cannot reach ${base}: ${netErr && netErr.message ? netErr.message : netErr}. Local dev: cd scriptops-api && uvicorn app.main:app --host 127.0.0.1 --port 8000.${_fetchErrHint(base)}`
     );
   }
   if (!r.ok) {
@@ -1073,7 +1077,8 @@ async function applySession(me) {
 }
 
 function loginNetworkErrMsg() {
-  return 'Cannot reach the API. Check API base URL (e.g. https://api.scriptops.netcorecloud.com or http://127.0.0.1:8000), run uvicorn, and ensure SCRIPTOPS_CORS_ORIGINS on the API includes your UI origin (https://scriptops.netcorecloud.com). If you use file://, restart the API after CORS changes or serve the dashboard over HTTP.';
+  const b = getApiBase();
+  return 'Cannot reach the API at ' + b + '.' + _fetchErrHint(b) + ' Redeploy the API after updating CORS. For split domains, SCRIPTOPS_CORS_ORIGINS must include your UI origin (e.g. https://scriptops.netcorecloud.com).';
 }
 
 async function connectApi() {
@@ -1098,7 +1103,7 @@ async function connectApi() {
       await applySession(data.user || data);
     } catch (e) {
       let msg = String(e.message || e);
-      if (msg === 'Failed to fetch' || /NetworkError|Load failed/i.test(msg)) msg = loginNetworkErrMsg();
+      if (/Failed to fetch|NetworkError|Load failed/i.test(msg)) msg = loginNetworkErrMsg();
       err.textContent = msg;
       err.classList.remove('hidden');
     }
@@ -1115,7 +1120,7 @@ async function connectApi() {
     await applySession(data.user || data);
   } catch (e) {
     let msg = String(e.message || e);
-    if (msg === 'Failed to fetch' || /NetworkError|Load failed/i.test(msg)) msg = loginNetworkErrMsg();
+    if (/Failed to fetch|NetworkError|Load failed/i.test(msg)) msg = loginNetworkErrMsg();
     err.textContent = msg;
     err.classList.remove('hidden');
   }
