@@ -68,7 +68,7 @@ Returns a **Server-Sent Events** stream of the job's real-time output.
 Connect with EventSource in the browser or `curl -N`:
 ```
 curl -N -H "X-ScriptOps-Key: sk_live_..." \\
-  https://scriptops.internal/api/v1/executions/J0047/stream
+  https://api.scriptops.netcorecloud.com/api/v1/executions/J0047/stream
 ```
 
 ### Events

@@ -363,7 +363,7 @@ tr:hover td{background:rgba(99,178,255,0.03);color:var(--text0);}
     <div class="login-label">Connect to API</div>
     <div class="fr" style="margin-bottom:12px">
       <label>API base URL</label>
-      <input type="text" id="api-base-url" placeholder="http://127.0.0.1:8000" style="width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);color:var(--text0);padding:8px 11px;font-size:12px;font-family:var(--mono);"/>
+      <input type="text" id="api-base-url" placeholder="https://api.scriptops.netcorecloud.com" style="width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);color:var(--text0);padding:8px 11px;font-size:12px;font-family:var(--mono);"/>
     </div>
     <div class="fr" style="margin-bottom:12px">
       <label>API key (X-ScriptOps-Key)</label>
@@ -587,14 +587,14 @@ tr:hover td{background:rgba(99,178,255,0.03);color:var(--text0);}
   </div>
   <div class="alert al-inf mb14">ℹ API keys inherit the role of their creator. External callers can only trigger scripts permitted by that role.</div>
   <div class="ep mb14">
-    <div class="mb8"><span class="method-post">POST</span> <span class="url">https://scriptops.internal/api/v1/execute</span></div>
+    <div class="mb8"><span class="method-post">POST</span> <span class="url" id="api-doc-url-run">https://api.scriptops.netcorecloud.com/api/v1/scripts/gen_sales_report/run</span></div>
     <div class="mb8"><span class="cmt"># Headers</span></div>
     <div class="mb8"><span class="kw">X-ScriptOps-Key:</span> <span class="str">sk_live_xxxxxxxxxxxxxxxx</span></div>
     <div class="mb8"><span class="kw">Content-Type:</span> <span class="str">application/json</span></div>
     <div class="mb8"><span class="cmt"># Body</span></div>
-    <div class="mb8">{ <span class="kw">"script_id"</span>: <span class="str">"gen_sales_report"</span>, <span class="kw">"params"</span>: { <span class="str">"month"</span>: <span class="str">"2024-06"</span> } }</div>
-    <div style="margin-top:10px"><span class="method-get">GET</span>  <span class="url">https://scriptops.internal/api/v1/status/</span><span class="kw">:job_id</span></div>
-    <div style="margin-top:6px"><span class="method-get">GET</span>  <span class="url">https://scriptops.internal/api/v1/stream/</span><span class="kw">:job_id</span>  <span class="cmt"> # SSE real-time output</span></div>
+    <div class="mb8">{ <span class="kw">"params"</span>: { <span class="str">"month"</span>: <span class="str">"2024-06"</span> } }</div>
+    <div style="margin-top:10px"><span class="method-get">GET</span>  <span class="url" id="api-doc-url-status">https://api.scriptops.netcorecloud.com/api/v1/executions/</span><span class="kw">:job_id</span></div>
+    <div style="margin-top:6px"><span class="method-get">GET</span>  <span class="url" id="api-doc-url-stream">https://api.scriptops.netcorecloud.com/api/v1/executions/</span><span class="kw">:job_id</span><span class="url">/stream</span>  <span class="cmt"> # SSE real-time output</span></div>
   </div>
   <div class="card">
     <table><thead><tr><th>Name</th><th>Key (masked)</th><th>Owner</th><th>Role Scope</th><th>Last Used</th><th>Status</th><th></th></tr></thead>
@@ -769,7 +769,8 @@ tr:hover td{background:rgba(99,178,255,0.03);color:var(--text0);}
 <!-- ═══════════════════════════════ SCRIPT ════════════════════════════════════ -->
 <script>
 // ─── API CONFIG ───────────────────────────────────────────────────────────────
-const SCRIPTOPS_API_DEFAULT = window.__SCRIPTOPS_API__ || 'http://127.0.0.1:8000';
+// API host (UI may be on scriptops.netcorecloud.com; override with window.__SCRIPTOPS_API__ if needed)
+const SCRIPTOPS_API_DEFAULT = window.__SCRIPTOPS_API__ || 'https://api.scriptops.netcorecloud.com';
 const LS_API_BASE = 'scriptops_api_base';
 const LS_API_KEY = 'scriptops_api_key';
 function getApiBase() {
@@ -780,6 +781,16 @@ function getApiBase() {
 function setApiBase(u) { localStorage.setItem(LS_API_BASE, u); }
 function getApiKey() { return localStorage.getItem(LS_API_KEY) || ''; }
 function setApiKey(k) { localStorage.setItem(LS_API_KEY, k); }
+
+function updateApiDocExamples() {
+  const base = getApiBase();
+  const run = document.getElementById('api-doc-url-run');
+  if (run) run.textContent = base + '/api/v1/scripts/gen_sales_report/run';
+  const st = document.getElementById('api-doc-url-status');
+  if (st) st.textContent = base + '/api/v1/executions/';
+  const streamBase = document.getElementById('api-doc-url-stream');
+  if (streamBase) streamBase.textContent = base + '/api/v1/executions/';
+}
 
 async function apiFetch(path, opts = {}) {
   const base = getApiBase();
@@ -986,13 +997,14 @@ async function connectApi() {
     updateOverviewStats();
     const ss = document.getElementById('scripts-sub');
     if (ss) ss.textContent = SCRIPTS.length + ' scripts · role-gated execution';
+    updateApiDocExamples();
     renderAll();
     nav('overview');
     startLiveStream();
   } catch (e) {
     let msg = String(e.message || e);
     if (msg === 'Failed to fetch' || /NetworkError|Load failed/i.test(msg)) {
-      msg = 'Cannot reach the API. Use API base URL http://127.0.0.1:8000 (or your server), run uvicorn in scriptops-api, and check CORS. If you use file://, restart the API after updating CORS or serve the dashboard with a local HTTP server.';
+      msg = 'Cannot reach the API. Check API base URL (e.g. https://api.scriptops.netcorecloud.com or http://127.0.0.1:8000), run uvicorn, and ensure SCRIPTOPS_CORS_ORIGINS on the API includes your UI origin (https://scriptops.netcorecloud.com). If you use file://, restart the API after CORS changes or serve the dashboard over HTTP.';
     }
     err.textContent = msg;
     err.classList.remove('hidden');

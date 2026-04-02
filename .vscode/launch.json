@@ -8,7 +8,7 @@
             "type": "chrome",
             "request": "launch",
             "name": "Open scriptops-dashboard.html",
-            "file": "/Users/rohan.deshmukh/Downloads/Work/ScriptOps/scriptOps/scriptops-dashboard.html"
+            "file": "${workspaceFolder}/scriptops-dashboard.html"
         }
     ]
 }

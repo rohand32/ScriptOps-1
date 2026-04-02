@@ -4,20 +4,26 @@ This document covers hosting the **dashboard** (static HTML) and the **API** (Fa
 
 ## UI host vs API host
 
-- Serve **`scriptops-dashboard.html`** from any static host (object storage + CDN, Nginx `root`, GitHub Pages, etc.). It is a single file that calls the API using a configurable base URL and `X-ScriptOps-Key`.
-- Run the API from **`scriptops-api/`** with Uvicorn/Gunicorn behind a reverse proxy (TLS termination at the proxy is recommended).
+- Serve **`scriptops-dashboard.html`** from your **UI** origin (static host, CDN, etc.). It calls the **API** using a configurable base URL and `X-ScriptOps-Key`.
+- Run the API from **`scriptops-api/`** with Uvicorn/Gunicorn behind a reverse proxy (TLS on both UI and API is recommended).
 
-Set the dashboard’s **API base URL** at login (for example `https://api.scriptops.internal`). Do not commit real URLs or keys into the repository.
+**Split domains (this deployment):** the dashboard is intended at **`https://scriptops.netcorecloud.com`** and the API at **`https://api.scriptops.netcorecloud.com`**. At login, set **API base URL** to the API origin (no path). If your real API hostname differs, use that value instead and keep **`SCRIPTOPS_CORS_ORIGINS`** aligned with the **UI** origin only. Do not commit API keys into the repository.
+
+## Public (HTTPS) hosting
+
+- **`SCRIPTOPS_CORS_ORIGINS`** must list the **dashboard origin** (where users open the HTML), e.g. `https://scriptops.netcorecloud.com`. Do **not** add the API hostname unless you also serve the UI from there.
+- Prefer **HTTPS** for both UI and API; mixed content (HTTPS page calling `http://` API) is blocked by browsers.
+- Restrict CORS to UI origins you control. Defaults in code include this UI host plus common local dev origins and `null` for `file://`.
 
 ## CORS
 
 The API enables `CORSMiddleware` with origins from **`SCRIPTOPS_CORS_ORIGINS`** (comma-separated). Include the **exact** origin of the dashboard, including scheme and port, for example:
 
 ```bash
-export SCRIPTOPS_CORS_ORIGINS="https://dashboard.scriptops.internal,http://localhost:5500"
+export SCRIPTOPS_CORS_ORIGINS="https://scriptops.netcorecloud.com,http://localhost:5500"
 ```
 
-The default in code includes common local dev ports; production should list only trusted UI origins.
+The default in code includes the production UI origin above, common local dev ports, and `null` (for `file://`). Override with **`SCRIPTOPS_CORS_ORIGINS`** if you want a minimal allowlist (UI origins only, never the API hostname unless the UI is served from it).
 
 ## SSE and the `X-ScriptOps-Key` header
 
