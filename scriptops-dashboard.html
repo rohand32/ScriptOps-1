@@ -331,6 +331,14 @@ tr:hover td{background:rgba(99,178,255,0.03);color:var(--text0);}
 .ep .str{color:var(--amber);}
 .ep .cmt{color:var(--text3);}
 
+/* ── LOGIN TABS ── */
+.login-tabs{display:flex;gap:6px;margin-bottom:12px;}
+.login-tab{
+  flex:1;padding:8px 10px;font-size:11px;font-family:var(--mono);cursor:pointer;
+  border:1px solid var(--border2);border-radius:var(--r);background:var(--bg3);color:var(--text2);
+}
+.login-tab.on{border-color:var(--purple);color:var(--text0);background:rgba(157,112,255,0.12);}
+
 /* ── UTILS ── */
 .hidden{display:none!important;}
 .flex{display:flex;}
@@ -365,31 +373,47 @@ tr:hover td{background:rgba(99,178,255,0.03);color:var(--text0);}
       <label>API base URL</label>
       <input type="text" id="api-base-url" placeholder="https://api.scriptops.netcorecloud.com" style="width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);color:var(--text0);padding:8px 11px;font-size:12px;font-family:var(--mono);"/>
     </div>
-    <div class="fr" style="margin-bottom:12px">
-      <label>API key (X-ScriptOps-Key)</label>
-      <input type="password" id="api-key-input" placeholder="sk_live_..." style="width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);color:var(--text0);padding:8px 11px;font-size:12px;font-family:var(--mono);"/>
+    <div class="login-tabs">
+      <button type="button" class="login-tab on" id="tab-pw" onclick="setLoginTab('pw')">Username &amp; password</button>
+      <button type="button" class="login-tab" id="tab-key" onclick="setLoginTab('key')">API key</button>
     </div>
-    <button class="btn btn-p" style="width:100%;justify-content:center" onclick="connectApi()">Connect</button>
-    <div class="login-note" style="margin-top:16px">Quick demo keys (dev)</div>
+    <div id="login-pane-pw">
+      <div class="fr" style="margin-bottom:12px">
+        <label>Username</label>
+        <input type="text" id="login-username" autocomplete="username" placeholder="arjun" style="width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);color:var(--text0);padding:8px 11px;font-size:12px;font-family:var(--mono);"/>
+      </div>
+      <div class="fr" style="margin-bottom:12px">
+        <label>Password</label>
+        <input type="password" id="login-password" autocomplete="current-password" placeholder="demo" style="width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);color:var(--text0);padding:8px 11px;font-size:12px;font-family:var(--mono);"/>
+      </div>
+    </div>
+    <div id="login-pane-key" class="hidden">
+      <div class="fr" style="margin-bottom:12px">
+        <label>API key (X-ScriptOps-Key)</label>
+        <input type="password" id="api-key-input" placeholder="sk_live_..." style="width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);color:var(--text0);padding:8px 11px;font-size:12px;font-family:var(--mono);"/>
+      </div>
+    </div>
+    <button class="btn btn-p" style="width:100%;justify-content:center" onclick="connectApi()">Sign in</button>
+    <div class="login-note" style="margin-top:16px">Quick demo (dev) — password <span class="mono">demo</span></div>
     <div class="user-pick">
-      <div class="ucard" onclick="quickLogin('sk_live_admin_demo')">
+      <div class="ucard" onclick="quickPw('arjun')">
         <div class="av" style="background:rgba(157,112,255,0.15);color:#9d70ff">AD</div>
-        <div><div class="name">Admin demo</div><div class="email">sk_live_admin_demo</div></div>
+        <div><div class="name">Arjun</div><div class="email">arjun / demo</div></div>
         <div class="rbadge" style="background:var(--purple-d);color:var(--purple)">Admin</div>
       </div>
-      <div class="ucard" onclick="quickLogin('sk_live_manager_demo')">
+      <div class="ucard" onclick="quickPw('priya')">
         <div class="av" style="background:rgba(80,144,255,0.15);color:#5090ff">PM</div>
-        <div><div class="name">Manager demo</div><div class="email">sk_live_manager_demo</div></div>
+        <div><div class="name">Priya</div><div class="email">priya / demo</div></div>
         <div class="rbadge" style="background:var(--blue-d);color:var(--blue)">Manager</div>
       </div>
-      <div class="ucard" onclick="quickLogin('sk_live_operator_demo')">
+      <div class="ucard" onclick="quickPw('rahul')">
         <div class="av" style="background:rgba(240,168,64,0.15);color:#f0a840">RK</div>
-        <div><div class="name">Operator demo</div><div class="email">sk_live_operator_demo</div></div>
+        <div><div class="name">Rahul</div><div class="email">rahul / demo</div></div>
         <div class="rbadge" style="background:var(--amber-d);color:var(--amber)">Operator</div>
       </div>
-      <div class="ucard" onclick="quickLogin('sk_live_viewer_demo')">
+      <div class="ucard" onclick="quickPw('sneha')">
         <div class="av" style="background:rgba(52,217,123,0.15);color:#34d97b">SJ</div>
-        <div><div class="name">Viewer demo</div><div class="email">sk_live_viewer_demo</div></div>
+        <div><div class="name">Sneha</div><div class="email">sneha / demo</div></div>
         <div class="rbadge" style="background:var(--green-d);color:var(--green)">Viewer</div>
       </div>
     </div>
@@ -773,6 +797,9 @@ tr:hover td{background:rgba(99,178,255,0.03);color:var(--text0);}
 const SCRIPTOPS_API_DEFAULT = window.__SCRIPTOPS_API__ || 'https://api.scriptops.netcorecloud.com';
 const LS_API_BASE = 'scriptops_api_base';
 const LS_API_KEY = 'scriptops_api_key';
+const LS_JWT = 'scriptops_jwt';
+let loginTab = 'pw';
+
 function getApiBase() {
   const el = document.getElementById('api-base-url');
   if (el && el.value.trim()) return el.value.trim().replace(/\/$/, '');
@@ -781,6 +808,61 @@ function getApiBase() {
 function setApiBase(u) { localStorage.setItem(LS_API_BASE, u); }
 function getApiKey() { return localStorage.getItem(LS_API_KEY) || ''; }
 function setApiKey(k) { localStorage.setItem(LS_API_KEY, k); }
+function clearApiKey() { localStorage.removeItem(LS_API_KEY); }
+function getJwt() { return localStorage.getItem(LS_JWT) || ''; }
+function setJwt(t) { localStorage.setItem(LS_JWT, t); }
+function clearJwt() { localStorage.removeItem(LS_JWT); }
+
+function setLoginTab(mode) {
+  loginTab = mode;
+  const tp = document.getElementById('tab-pw');
+  const tk = document.getElementById('tab-key');
+  const pp = document.getElementById('login-pane-pw');
+  const pk = document.getElementById('login-pane-key');
+  if (tp) tp.classList.toggle('on', mode === 'pw');
+  if (tk) tk.classList.toggle('on', mode === 'key');
+  if (pp) pp.classList.toggle('hidden', mode !== 'pw');
+  if (pk) pk.classList.toggle('hidden', mode !== 'key');
+}
+
+function getAuthHeaders() {
+  const jwt = getJwt();
+  if (jwt) return { Authorization: 'Bearer ' + jwt };
+  const key = getApiKey();
+  if (key) return { 'X-ScriptOps-Key': key };
+  return {};
+}
+
+function _fetchErrHint() {
+  return (typeof location !== 'undefined' && location.protocol === 'file:')
+    ? ' You opened this page via file:// — ensure the API allows Origin "null" (default in ScriptOps) or serve this HTML over HTTP (e.g. Live Server).'
+    : '';
+}
+
+/** POST /auth/login — body is { api_key } or { username, password }. */
+async function authLoginRequest(base, body) {
+  let r;
+  try {
+    r = await fetch(base + '/api/v1/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+  } catch (netErr) {
+    throw new Error(
+      `Cannot reach ${base}: ${netErr && netErr.message ? netErr.message : netErr}. Start the API: cd scriptops-api && uvicorn app.main:app --host 127.0.0.1 --port 8000.${_fetchErrHint()}`
+    );
+  }
+  if (!r.ok) {
+    let msg = r.statusText;
+    try {
+      const j = await r.json();
+      msg = j.detail?.message || j.message || JSON.stringify(j.detail || j);
+    } catch (e) { try { msg = await r.text(); } catch (e2) {} }
+    throw new Error(msg);
+  }
+  return r.json();
+}
 
 function updateApiDocExamples() {
   const base = getApiBase();
@@ -794,9 +876,9 @@ function updateApiDocExamples() {
 
 async function apiFetch(path, opts = {}) {
   const base = getApiBase();
-  const key = getApiKey();
-  if (!key) throw new Error('No API key');
-  const headers = { 'X-ScriptOps-Key': key, ...opts.headers };
+  const auth = getAuthHeaders();
+  if (!auth.Authorization && !auth['X-ScriptOps-Key']) throw new Error('Not signed in');
+  const headers = { ...auth, ...opts.headers };
   if (opts.body && typeof opts.body === 'object' && !(opts.body instanceof FormData) && !(opts.body instanceof Blob)) {
     headers['Content-Type'] = 'application/json';
     opts = { ...opts, body: JSON.stringify(opts.body) };
@@ -805,11 +887,8 @@ async function apiFetch(path, opts = {}) {
   try {
     r = await fetch(base + path, { ...opts, headers });
   } catch (netErr) {
-    const hint = (typeof location !== 'undefined' && location.protocol === 'file:')
-      ? ' You opened this page via file:// — ensure the API allows Origin "null" (default in ScriptOps) or serve this HTML over HTTP (e.g. Live Server).'
-      : '';
     throw new Error(
-      `Cannot reach ${base}: ${netErr && netErr.message ? netErr.message : netErr}. Start the API: cd scriptops-api && uvicorn app.main:app --host 127.0.0.1 --port 8000.${hint}`
+      `Cannot reach ${base}: ${netErr && netErr.message ? netErr.message : netErr}. Start the API: cd scriptops-api && uvicorn app.main:app --host 127.0.0.1 --port 8000.${_fetchErrHint()}`
     );
   }
   if (!r.ok) {
@@ -959,67 +1038,129 @@ async function loadRemoteData() {
   API_KEYS_LIST = keysRes.items || [];
 }
 
+async function applySession(me) {
+  const role = (me.role && me.role.value) ? me.role.value : me.role;
+  const st = ROLE_STYLE[role] || ROLE_STYLE.viewer;
+  const parts = (me.name || 'User').split(/\s+/).filter(Boolean);
+  const init = parts.length >= 2 ? (parts[0][0] + parts[1][0]) : (me.name || 'U').slice(0, 2).toUpperCase();
+  CU = { name: me.name, email: me.email, role, init, col: st.col, bg: st.bg };
+  await loadRemoteData();
+  document.getElementById('login').style.display = 'none';
+  const av = document.getElementById('sb-av');
+  av.textContent = CU.init;
+  av.style.cssText = `width:28px;height:28px;border-radius:50%;background:${CU.bg};color:${CU.col};display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:11px;font-weight:600;flex-shrink:0;`;
+  document.getElementById('sb-name').textContent = CU.name;
+  document.getElementById('sb-role').textContent = CU.role;
+  document.getElementById('ov-greeting').textContent = `Welcome, ${CU.name.split(' ')[0]} · ${CU.role}`;
+  const isAdmin = CU.role === 'admin';
+  ['ni-users','ni-api','ni-servers'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.style.opacity = isAdmin ? '1' : '0.3';
+    el.style.pointerEvents = isAdmin ? '' : 'none';
+  });
+  ['btn-add-script','btn-add-sched','btn-add-user','btn-gen-key','btn-add-srv'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = isAdmin ? '' : 'none';
+  });
+  updateOverviewStats();
+  const ss = document.getElementById('scripts-sub');
+  if (ss) ss.textContent = SCRIPTS.length + ' scripts · role-gated execution';
+  updateApiDocExamples();
+  renderAll();
+  nav('overview');
+  startLiveStream();
+}
+
+function loginNetworkErrMsg() {
+  return 'Cannot reach the API. Check API base URL (e.g. https://api.scriptops.netcorecloud.com or http://127.0.0.1:8000), run uvicorn, and ensure SCRIPTOPS_CORS_ORIGINS on the API includes your UI origin (https://scriptops.netcorecloud.com). If you use file://, restart the API after CORS changes or serve the dashboard over HTTP.';
+}
+
 async function connectApi() {
   const err = document.getElementById('login-err');
   err.classList.add('hidden');
-  const keyIn = document.getElementById('api-key-input');
   const baseIn = document.getElementById('api-base-url');
   if (baseIn && baseIn.value.trim()) setApiBase(baseIn.value.trim().replace(/\/$/, ''));
+  const base = getApiBase();
+
+  if (loginTab === 'pw') {
+    const uEl = document.getElementById('login-username');
+    const pEl = document.getElementById('login-password');
+    const u = (uEl && uEl.value.trim()) || '';
+    const p = pEl ? pEl.value : '';
+    if (!u) { err.textContent = 'Enter username'; err.classList.remove('hidden'); return; }
+    if (p === '') { err.textContent = 'Enter password'; err.classList.remove('hidden'); return; }
+    try {
+      clearJwt();
+      clearApiKey();
+      const data = await authLoginRequest(base, { username: u, password: p });
+      if (data.access_token) setJwt(data.access_token);
+      await applySession(data.user || data);
+    } catch (e) {
+      let msg = String(e.message || e);
+      if (msg === 'Failed to fetch' || /NetworkError|Load failed/i.test(msg)) msg = loginNetworkErrMsg();
+      err.textContent = msg;
+      err.classList.remove('hidden');
+    }
+    return;
+  }
+
+  const keyIn = document.getElementById('api-key-input');
   const key = (keyIn && keyIn.value.trim()) || getApiKey();
   if (!key) { err.textContent = 'Enter an API key'; err.classList.remove('hidden'); return; }
-  setApiKey(key);
   try {
-    const me = await apiFetch('/api/v1/auth/me');
-    const role = (me.role && me.role.value) ? me.role.value : me.role;
-    const st = ROLE_STYLE[role] || ROLE_STYLE.viewer;
-    const parts = (me.name || 'User').split(/\s+/).filter(Boolean);
-    const init = parts.length >= 2 ? (parts[0][0] + parts[1][0]) : (me.name || 'U').slice(0, 2).toUpperCase();
-    CU = { name: me.name, email: me.email, role, init, col: st.col, bg: st.bg };
-    await loadRemoteData();
-    document.getElementById('login').style.display = 'none';
-    const av = document.getElementById('sb-av');
-    av.textContent = CU.init;
-    av.style.cssText = `width:28px;height:28px;border-radius:50%;background:${CU.bg};color:${CU.col};display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:11px;font-weight:600;flex-shrink:0;`;
-    document.getElementById('sb-name').textContent = CU.name;
-    document.getElementById('sb-role').textContent = CU.role;
-    document.getElementById('ov-greeting').textContent = `Welcome, ${CU.name.split(' ')[0]} · ${CU.role}`;
-    const isAdmin = CU.role === 'admin';
-    ['ni-users','ni-api','ni-servers'].forEach(id => {
-      const el = document.getElementById(id);
-      if (!el) return;
-      el.style.opacity = isAdmin ? '1' : '0.3';
-      el.style.pointerEvents = isAdmin ? '' : 'none';
-    });
-    ['btn-add-script','btn-add-sched','btn-add-user','btn-gen-key','btn-add-srv'].forEach(id => {
-      const el = document.getElementById(id);
-      if (el) el.style.display = isAdmin ? '' : 'none';
-    });
-    updateOverviewStats();
-    const ss = document.getElementById('scripts-sub');
-    if (ss) ss.textContent = SCRIPTS.length + ' scripts · role-gated execution';
-    updateApiDocExamples();
-    renderAll();
-    nav('overview');
-    startLiveStream();
+    clearJwt();
+    setApiKey(key);
+    const data = await authLoginRequest(base, { api_key: key });
+    await applySession(data.user || data);
   } catch (e) {
     let msg = String(e.message || e);
-    if (msg === 'Failed to fetch' || /NetworkError|Load failed/i.test(msg)) {
-      msg = 'Cannot reach the API. Check API base URL (e.g. https://api.scriptops.netcorecloud.com or http://127.0.0.1:8000), run uvicorn, and ensure SCRIPTOPS_CORS_ORIGINS on the API includes your UI origin (https://scriptops.netcorecloud.com). If you use file://, restart the API after CORS changes or serve the dashboard over HTTP.';
-    }
+    if (msg === 'Failed to fetch' || /NetworkError|Load failed/i.test(msg)) msg = loginNetworkErrMsg();
     err.textContent = msg;
     err.classList.remove('hidden');
   }
 }
 
 function quickLogin(key) {
-  document.getElementById('api-key-input').value = key;
+  setLoginTab('key');
+  const k = document.getElementById('api-key-input');
+  if (k) k.value = key;
+  connectApi();
+}
+
+function quickPw(username) {
+  setLoginTab('pw');
+  const u = document.getElementById('login-username');
+  const p = document.getElementById('login-password');
+  if (u) u.value = username;
+  if (p) p.value = 'demo';
   connectApi();
 }
 
 function logout() {
   CU = null;
   clearInterval(liveInterval);
+  clearJwt();
+  clearApiKey();
+  const pw = document.getElementById('login-password');
+  if (pw) pw.value = '';
   document.getElementById('login').style.display = 'flex';
+}
+
+async function tryResumeSession() {
+  const b = document.getElementById('api-base-url');
+  if (b) b.value = getApiBase();
+  if (!getJwt() && !getApiKey()) return;
+  try {
+    let me;
+    if (getJwt()) {
+      me = await apiFetch('/api/v1/auth/me');
+    } else {
+      const data = await authLoginRequest(getApiBase(), { api_key: getApiKey() });
+      me = data.user || data;
+    }
+    await applySession(me);
+  } catch (e) { /* stay on login */ }
 }
 
 function updateOverviewStats() {
@@ -1043,6 +1184,7 @@ document.addEventListener('DOMContentLoaded', () => {
   if (b) b.value = getApiBase();
   const k = document.getElementById('api-key-input');
   if (k && getApiKey()) k.value = getApiKey();
+  tryResumeSession();
 });
 
 // ─── NAV ──────────────────────────────────────────────────────────────────────
@@ -1470,9 +1612,8 @@ async function doExec() {
     });
     const jobId = job.job_id;
     const base = getApiBase();
-    const key = getApiKey();
     const url = base + '/api/v1/executions/' + encodeURIComponent(jobId) + '/stream';
-    const res = await fetch(url, { headers: { 'X-ScriptOps-Key': key } });
+    const res = await fetch(url, { headers: getAuthHeaders() });
     if (!res.ok) throw new Error('SSE stream failed: ' + res.status);
     const reader = res.body.getReader();
     const dec = new TextDecoder();

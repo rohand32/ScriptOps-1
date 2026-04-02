@@ -26,13 +26,22 @@ open http://localhost:8000/docs
 
 ## Authentication
 
-Every request (except `/health`, `/docs`) requires an API key:
+Most requests require an API key on every call:
 
 ```
 X-ScriptOps-Key: sk_live_<your_key>
 ```
 
-**Demo keys (development only):**
+**Login (`POST /api/v1/auth/login`):**
+
+- **Username & password** (dashboard default): `{ "username": "arjun", "password": "demo" }` returns `{ "user", "access_token", "token_type": "bearer" }`. Send the JWT as `Authorization: Bearer <access_token>` on later calls (the dashboard stores it automatically).
+- **API key:** `{ "api_key": "sk_live_..." }` returns `{ "user" }` only; use `X-ScriptOps-Key` on later calls.
+
+Open paths include `/health`, `/docs`, and `/api/v1/auth/login`.
+
+**Demo users (password `demo` for all):** `arjun` (admin), `priya` (manager), `rahul` (operator), `sneha` (viewer).
+
+**Demo API keys (development only):**
 
 | Key | Role |
 |-----|------|
@@ -317,6 +326,9 @@ Cancel a running or pending job.
 ---
 
 ### Auth  `/api/v1/auth/...`
+
+#### `POST /api/v1/auth/login`
+**Password:** `{ "username", "password" }` → `{ "user", "access_token", "token_type": "bearer" }`. **API key:** `{ "api_key" }` → `{ "user" }`. No auth header required for this call only.
 
 #### `GET /api/v1/auth/me`
 Returns the identity and role of the current API key.

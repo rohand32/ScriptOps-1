@@ -8,10 +8,18 @@ from fastapi import Request, Depends, HTTPException
 from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 from app.models.schemas import TokenUser, Role
+from app.utils.jwt_tokens import decode_access_token
 from app.utils.logger import setup_logger
 
 logger = setup_logger(__name__)
-PUBLIC_PATHS = {"/", "/health", "/docs", "/redoc", "/openapi.json"}
+PUBLIC_PATHS = {
+    "/",
+    "/health",
+    "/docs",
+    "/redoc",
+    "/openapi.json",
+    "/api/v1/auth/login",
+}
 ROLE_RANK = {Role.viewer: 0, Role.operator: 1, Role.manager: 2, Role.admin: 3}
 
 def _hash(key: str) -> str:
@@ -24,13 +32,37 @@ _KEY_STORE: dict[str, dict] = {
     _hash("sk_live_viewer_demo"):   {"user_id":"usr_004","name":"Sneha Joshi",  "email":"sneha@corp.internal", "role":"viewer",   "key_name":"Viewer Demo Key"},
 }
 
-def _lookup_key(raw_key: str) -> Optional[TokenUser]:
-    target = _hash(raw_key)
-    found = None
+def resolve_api_key(raw_key: str) -> Optional[TokenUser]:
+    """Validate a raw API key and return the associated user, or None."""
+    target = _hash(raw_key.strip())
     for h, u in _KEY_STORE.items():
         if hmac.compare_digest(h, target):
-            found = u
-    return TokenUser(**found) if found else None
+            return TokenUser(**u)
+    return None
+
+
+def register_api_key(raw_key: str, user: TokenUser) -> None:
+    """Register a key at runtime (e.g. admin-created keys)."""
+    d = user.model_dump(mode="json")
+    _KEY_STORE[_hash(raw_key.strip())] = d
+
+
+def unregister_api_key(raw_key: str) -> None:
+    """Remove a key from the store (e.g. on revoke)."""
+    _KEY_STORE.pop(_hash(raw_key.strip()), None)
+
+
+def resolve_bearer_or_api_key(raw: str) -> Optional[TokenUser]:
+    """Accept JWT (password login) or API key."""
+    s = raw.strip()
+    if not s:
+        return None
+    if s.count(".") == 2:
+        jwt_user = decode_access_token(s)
+        if jwt_user:
+            return jwt_user
+    return resolve_api_key(s)
+
 
 class AuthMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
@@ -39,10 +71,22 @@ class AuthMiddleware(BaseHTTPMiddleware):
             return await call_next(request)
         raw_key = (request.headers.get("X-ScriptOps-Key") or request.headers.get("Authorization","").removeprefix("Bearer ")).strip()
         if not raw_key:
-            return JSONResponse(status_code=401, content={"error":"missing_api_key","message":"Provide your API key via X-ScriptOps-Key header."})
-        user = _lookup_key(raw_key)
+            return JSONResponse(
+                status_code=401,
+                content={
+                    "error": "missing_credentials",
+                    "message": "Provide X-ScriptOps-Key or Authorization: Bearer <API key or JWT>.",
+                },
+            )
+        user = resolve_bearer_or_api_key(raw_key)
         if not user:
-            return JSONResponse(status_code=401, content={"error":"invalid_api_key","message":"API key not recognised or has been revoked."})
+            return JSONResponse(
+                status_code=401,
+                content={
+                    "error": "invalid_credentials",
+                    "message": "API key not recognised, revoked, or session expired.",
+                },
+            )
         request.state.user = user
         return await call_next(request)
 

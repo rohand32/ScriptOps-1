@@ -314,6 +314,23 @@ Cancel a running or pending job.
 
 ### Auth  `/api/v1/auth/...`
 
+#### `POST /api/v1/auth/login`
+No auth header required.
+
+**Password (dashboard):** returns a JWT for `Authorization: Bearer …`.
+
+```json
+{ "username": "arjun", "password": "demo" }
+```
+
+**API key:** returns `user` only; reuse the key as `X-ScriptOps-Key`.
+
+```json
+{ "api_key": "sk_live_admin_demo" }
+```
+
+Set **`SCRIPTOPS_JWT_SECRET`** in production. Optional: **`SCRIPTOPS_JWT_EXPIRE_HOURS`** (default `24`).
+
 #### `GET /api/v1/auth/me`
 Returns the identity and role of the current API key.
 

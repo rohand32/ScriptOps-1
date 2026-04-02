@@ -6,7 +6,7 @@ from __future__ import annotations
 from typing import Any, Dict, List, Literal, Optional
 from datetime import datetime
 from enum import Enum
-from pydantic import BaseModel, Field, validator, EmailStr
+from pydantic import BaseModel, Field, model_validator, validator, EmailStr
 import uuid
 
 
@@ -78,6 +78,35 @@ class APIKeyResponse(BaseModel):
     scope:      Role
     created_at: datetime
     created_by: str
+
+
+class LoginRequest(BaseModel):
+    """Send either `api_key` **or** `username` + `password` (not both)."""
+
+    api_key: Optional[str] = Field(default=None, description="API key (same as X-ScriptOps-Key)")
+    username: Optional[str] = Field(default=None, min_length=1)
+    password: Optional[str] = Field(default=None)
+
+    @model_validator(mode="after")
+    def _login_mode(self):
+        ak = (self.api_key or "").strip()
+        un = (self.username or "").strip()
+        pw = self.password
+        if ak:
+            if un or pw is not None:
+                raise ValueError("Do not send username/password together with api_key")
+            self.api_key = ak
+            return self
+        if un and pw is not None and str(pw) != "":
+            self.username = un
+            return self
+        raise ValueError("Provide api_key or username and password")
+
+
+class LoginResponse(BaseModel):
+    user: TokenUser
+    access_token: Optional[str] = Field(default=None, description="JWT when using username/password")
+    token_type: Optional[str] = Field(default=None, description='"bearer" when access_token is set')
 
 
 # ── COMMON ────────────────────────────────────────────────────────────────────

@@ -49,6 +49,8 @@ Ensure buffering is disabled for SSE at the proxy (`X-Accel-Buffering: no` for N
 | Server list / script registry | YAML under `scriptops-api/config/` or paths via `SCRIPTOPS_CONFIG_DIR`, `SCRIPTOPS_SERVERS_FILE`, `SCRIPTOPS_SCRIPTS_FILE` |
 | SSH private keys | Paths in YAML (e.g. `ssh_key_path`); store keys outside the repo and restrict file permissions on the API host |
 | API keys | In-memory demo store in development; production should use a real store and rotation |
+| Dashboard password login | In-memory demo users in `user_accounts.py`; **set `SCRIPTOPS_JWT_SECRET`** (long random string) for JWT signing in production |
+| JWT lifetime | `SCRIPTOPS_JWT_EXPIRE_HOURS` (default `24`) |
 | Schedule DB | `SCRIPTOPS_SCHEDULES_DB` or default SQLite under `scriptops-api/data/` |
 | Outbound notifications | `SCRIPTOPS_NOTIFY_WEBHOOK_URL` (optional) |
 
