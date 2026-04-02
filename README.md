@@ -3,7 +3,7 @@
 **FastAPI backend for the ScriptOps Internal Automation Platform.**  
 Authenticated REST + SSE endpoints to execute report scripts, trigger cron jobs manually, and run database operations — with role-based access control enforced on every route.
 
-The runnable application and tests live under **`scriptops-api/`** (extracted from the historical zip). Run `uvicorn` and `pip install` from that directory. The static UI is **`scriptops-dashboard.html`** at the repo root; configure it with your API base URL and API key. For production topology, CORS, SSE, and secrets, see **[DEPLOYMENT.md](DEPLOYMENT.md)**.
+The runnable application and tests live under **`scriptops-api/`** (extracted from the historical zip). Run `uvicorn` and `pip install` from that directory. The static UI is **`scriptops-dashboard.html`** at the repo root (copy into **`scriptops-api/static/`** if you want the API to serve it at **`/static/scriptops-dashboard.html`** — see [DEPLOYMENT.md](DEPLOYMENT.md)). Configure the UI with your API base URL and sign-in. For production topology, CORS, SSE, and secrets, see **[DEPLOYMENT.md](DEPLOYMENT.md)**.
 
 ---
 

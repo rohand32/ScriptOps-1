@@ -64,10 +64,21 @@ def resolve_bearer_or_api_key(raw: str) -> Optional[TokenUser]:
     return resolve_api_key(s)
 
 
+def _path_is_public(path: str) -> bool:
+    if path in PUBLIC_PATHS:
+        return True
+    # Static UI (dashboard HTML/JS/CSS) served by FastAPI — no API key on GET
+    if path == "/static" or path.startswith("/static/"):
+        return True
+    if path == "/dashboard":
+        return True
+    return False
+
+
 class AuthMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
         path = request.url.path
-        if path in PUBLIC_PATHS or request.method == "OPTIONS":
+        if _path_is_public(path) or request.method == "OPTIONS":
             return await call_next(request)
         raw_key = (request.headers.get("X-ScriptOps-Key") or request.headers.get("Authorization","").removeprefix("Bearer ")).strip()
         if not raw_key:

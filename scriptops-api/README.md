@@ -16,7 +16,12 @@ uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 
 # Interactive docs
 open http://localhost:8000/docs
+
+# Dashboard from this service (optional): copy ../scriptops-dashboard.html into ./static/
+# then open http://localhost:8000/dashboard  or  http://localhost:8000/static/scriptops-dashboard.html
 ```
+
+Static files are served from **`static/`** at **`/static/`** when that directory exists. Set **`SCRIPTOPS_STATIC_DIR`** to use another path.
 
 ---
 

@@ -5,13 +5,14 @@ This document covers hosting the **dashboard** (static HTML) and the **API** (Fa
 ## UI host vs API host
 
 - Serve **`scriptops-dashboard.html`** from your **UI** origin (static host, CDN, etc.). It calls the **API** using a configurable base URL and `X-ScriptOps-Key`.
+- **Optional — UI from the API:** place the dashboard (and any other static assets) under **`scriptops-api/static/`**. The API serves them at **`/static/…`** (no auth). After restart, open e.g. **`https://your-api-host/static/scriptops-dashboard.html`** or **`/dashboard`** (redirects to that file). From repo root: `cp scriptops-dashboard.html scriptops-api/static/`. Override the directory with **`SCRIPTOPS_STATIC_DIR`** if needed.
 - Run the API from **`scriptops-api/`** with Uvicorn/Gunicorn behind a reverse proxy (TLS on both UI and API is recommended).
 
 **Split domains (this deployment):** the dashboard is intended at **`https://scriptops.netcorecloud.com`** and the API at **`https://api.scriptops.netcorecloud.com`**. At login, set **API base URL** to the API origin (no path). If your real API hostname differs, use that value instead and keep **`SCRIPTOPS_CORS_ORIGINS`** aligned with the **UI** origin only. Do not commit API keys into the repository.
 
 ## Public (HTTPS) hosting
 
-- **`SCRIPTOPS_CORS_ORIGINS`** must list the **dashboard origin** (where users open the HTML), e.g. `https://scriptops.netcorecloud.com`. Do **not** add the API hostname unless you also serve the UI from there.
+- **`SCRIPTOPS_CORS_ORIGINS`** must list the **dashboard origin** (where users open the HTML), e.g. `https://scriptops.netcorecloud.com`. If the dashboard is served **from the same host as the API** (`/static/…`), include that API origin in **`SCRIPTOPS_CORS_ORIGINS`** as well (browsers send it as the page origin).
 - Prefer **HTTPS** for both UI and API; mixed content (HTTPS page calling `http://` API) is blocked by browsers.
 - Restrict CORS to UI origins you control. Defaults in code include this UI host plus common local dev origins and `null` for `file://`.
 
@@ -46,6 +47,7 @@ Ensure buffering is disabled for SSE at the proxy (`X-Accel-Buffering: no` for N
 
 | Concern | Mechanism |
 |--------|-----------|
+| Static UI from API | Files in `scriptops-api/static/` → URL prefix `/static/`; env **`SCRIPTOPS_STATIC_DIR`** to use another path |
 | Server list / script registry | YAML under `scriptops-api/config/` or paths via `SCRIPTOPS_CONFIG_DIR`, `SCRIPTOPS_SERVERS_FILE`, `SCRIPTOPS_SCRIPTS_FILE` |
 | SSH private keys | Paths in YAML (e.g. `ssh_key_path`); store keys outside the repo and restrict file permissions on the API host |
 | API keys | In-memory demo store in development; production should use a real store and rotation |

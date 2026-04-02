@@ -8,7 +8,8 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, RedirectResponse
+from fastapi.staticfiles import StaticFiles
 import time
 
 from app.routes import reports, cron, database, executions, auth, scripts
@@ -16,6 +17,13 @@ from app.middleware.auth import AuthMiddleware
 from app.utils.logger import setup_logger
 
 logger = setup_logger(__name__)
+
+_APP_DIR = os.path.dirname(os.path.abspath(__file__))
+_DEFAULT_STATIC = os.path.join(_APP_DIR, "..", "static")
+
+
+def _static_root() -> str:
+    return os.path.abspath(os.environ.get("SCRIPTOPS_STATIC_DIR", _DEFAULT_STATIC))
 
 
 def _cors_origins() -> list[str]:
@@ -113,7 +121,22 @@ async def root():
         "version": "2.0.0",
         "docs": "/docs",
         "health": "/health",
+        "dashboard": "/static/scriptops-dashboard.html",
     }
+
+_static = _static_root()
+if os.path.isdir(_static):
+    app.mount("/static", StaticFiles(directory=_static), name="static")
+    logger.info("Serving static files from %s at /static/", _static)
+else:
+    logger.warning("Static directory missing (%s); create it or set SCRIPTOPS_STATIC_DIR", _static)
+
+
+@app.get("/dashboard", tags=["System"])
+async def dashboard_redirect():
+    """Shortcut to the dashboard HTML when it lives under /static/."""
+    target = "/static/scriptops-dashboard.html"
+    return RedirectResponse(url=target, status_code=307)
 
 # ── GLOBAL ERROR HANDLER ──────────────────────────────────────────────────────
 @app.exception_handler(Exception)
